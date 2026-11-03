@@ -1,0 +1,15 @@
+[project]
+name = "handoff-lab"
+version = "1.0.0"
+description = "A working, measured AI-assistant-to-human handoff for a regulated support chat (mocked Fin-style assistant and Genesys Cloud Open Messaging)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["jsonschema>=4.17"]
+
+[project.optional-dependencies]
+report = ["matplotlib>=3.7"]
+dev = ["pytest>=7.4", "matplotlib>=3.7"]
+
+[tool.setuptools]
+packages = ["handoff_lab"]

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Thrya29/chatbot/contracts/handoff-contract.v1.schema.json",
+  "title": "Handoff contract v1",
+  "description": "What an AI assistant hands to a human contact-centre queue. Layer 1 (attributes) is for routing; layer 2 (note) is for the human.",
+  "type": "object",
+  "required": ["version", "attributes", "note"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"const": "v1"},
+    "attributes": {
+      "type": "object",
+      "description": "Flat string key-values. Sent as Genesys Open Messaging channel.metadata.customAttributes and read in Architect with Get Participant Data.",
+      "required": ["hl_queue", "hl_priority", "hl_flags", "hl_lang", "hl_auth", "hl_topic", "hl_conversation_id"],
+      "additionalProperties": false,
+      "properties": {
+        "hl_queue": {"enum": ["FundingPayments", "TradingSupport", "AccountKYC", "PlatformTechnical", "Complaints", "PriorityVulnerable", "Security"]},
+        "hl_priority": {"enum": ["P1", "P2", "P3"]},
+        "hl_flags": {"type": "string", "pattern": "^([a-z_]+(,[a-z_]+)*)?$"},
+        "hl_lang": {"type": "string", "pattern": "^[a-z]{2}$"},
+        "hl_auth": {"enum": ["verified", "unverified"]},
+        "hl_entity": {"type": "string"},
+        "hl_topic": {"type": "string"},
+        "hl_ref": {"type": "string"},
+        "hl_conversation_id": {"type": "string"},
+        "hl_contract": {"const": "v1"}
+      }
+    },
+    "note": {
+      "type": "object",
+      "required": ["summary", "client_wants", "ai_told_them", "data_pulled", "signals", "client_was_told", "do_not_ask_again", "suggested_next_step"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": {"type": "string", "maxLength": 400},
+        "client_wants": {"type": "string"},
+        "ai_told_them": {"type": "array", "items": {"type": "string"}},
+        "data_pulled": {"type": "array", "items": {"type": "string"}},
+        "signals": {"type": "array", "items": {"type": "string"}},
+        "client_was_told": {"type": "string"},
+        "do_not_ask_again": {"type": "array", "items": {"type": "string"}},
+        "suggested_next_step": {"type": "string"},
+        "transcript_link": {"type": "string"}
+      }
+    }
+  }
+}

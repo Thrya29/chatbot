@@ -1,0 +1,97 @@
+<!doctype html><html><head><meta charset='utf-8'><title>What the agent sees on arrival (synthetic demo)</title><style>
+body{font-family:Inter,system-ui,sans-serif;background:#f6f4ef;color:#1b1f3b;margin:0;padding:24px}
+.card{background:#fff;border:1px solid #dcd9e6;border-radius:12px;padding:20px;max-width:980px;margin:0 auto 24px}
+h2{margin:0 0 4px;font-size:20px} .meta{color:#606478;font-size:14px;margin-bottom:12px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;background:#e8e6fb;color:#3b33b5;margin:2px;font-size:13px}
+.p1{background:#fde2e2;color:#9b1c1c}.p2{background:#fdf0d5;color:#8a5a00}.p3{background:#e5f4e4;color:#1e6b2d}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0 14px} td{border-top:1px solid #eee;padding:6px 8px;vertical-align:top}
+td:first-child{color:#606478;width:180px} pre{white-space:pre-wrap;background:#1e2134;color:#e6e8f5;padding:14px;border-radius:10px;font-size:13px}
+.msg{padding:6px 0;border-top:1px solid #f0eef5;font-size:14px}.who{font-weight:600;margin-right:6px}
+</style></head><body><h1 style='max-width:980px;margin:0 auto 16px'>What the agent sees on arrival (synthetic demo)</h1><div class='card'>
+<h2>FundingPayments <span class='pill p2'>P2</span></h2>
+<div class='meta'>gconv-0001 · routed by participant_data · agent Priya · state connected</div>
+<div><span class='pill'>asked_for_human</span><span class='pill'>frustrated</span><span class='pill'>late_payment</span><span class='pill'>possible_complaint</span><span class='pill'>repeat_contact</span></div>
+<table><tr><td>hl_auth</td><td>verified</td></tr><tr><td>hl_contract</td><td>v1</td></tr><tr><td>hl_conversation_id</td><td>conv-0001</td></tr><tr><td>hl_flags</td><td>asked_for_human,frustrated,late_payment,possible_complaint,repeat_contact</td></tr><tr><td>hl_lang</td><td>en</td></tr><tr><td>hl_priority</td><td>P2</td></tr><tr><td>hl_queue</td><td>FundingPayments</td></tr><tr><td>hl_ref</td><td>WD-55120</td></tr><tr><td>hl_topic</td><td>withdrawal_not_received</td></tr></table>
+<pre>[HANDOFF v1] queue=FundingPayments priority=P2 flags=asked_for_human,frustrated,late_payment,possible_complaint,repeat_contact lang=en auth=verified
+SUMMARY: Client asked for a person. Topic: withdrawal not received. Latest message: &quot;You keep telling me the same thing. This is useless. Get me a person.&quot;
+CLIENT WANTS: To know where the money is and receive it.
+AI ALREADY TOLD THEM: 26 Oct: &#x27;Withdrawal times&#x27; article; 27 Oct: &#x27;Withdrawal times&#x27; article
+DATA PULLED: WD-55120 | GBP 2500.00 | requested 2026-10-22 | sent 2026-10-23 | FASTER_PAYMENTS | ending 4417 | ref HLW-88213 | status SENT | due_by 2026-10-26
+SIGNALS: asked_for_human (&quot;Get me a person&quot;); frustrated (&quot;keep telling me the same&quot;); late_payment (&quot;WD-55120 sent 2026-10-23, due by 2026-10-26&quot;); possible_complaint (&quot;keep telling me the same&quot;); repeat_contact (&quot;2 earlier contacts on this issue&quot;)
+CLIENT WAS TOLD: You&#x27;ve asked about this more than once and I haven&#x27;t been able to help, so I&#x27;m passing you to our team now with everything you&#x27;ve told me, so you won&#x27;t need to repeat yourself. I&#x27;m sending them this: your £2,500.00 withdrawal sent on 23 October to your account ending 4417, bank reference HLW-88213, not yet received.
+DO NOT ASK AGAIN: amount £2,500; requested 22 Oct; account ending 4417; checked with their bank on 27 Oct
+SUGGESTED NEXT STEP: Trace the payment with the bank reference; confirm whether to log a complaint for the delay. (the human decides)
+TRANSCRIPT: assistant://conversations/conv-0001
+RECENT TRANSCRIPT:
+client: Where is my withdrawal?
+client: My withdrawal still hasn&#x27;t arrived
+client: You keep telling me the same thing. This is useless. Get me a person.
+assistant: You&#x27;ve asked about this more than once and I haven&#x27;t been able to help, so I&#x27;m passing you to our team now with everything you&#x27;ve told me, so you won&#x27;t need to repeat yourself. I&#x27;m sending them this: your £2,500.00 withdrawal sent on 23 October to your account ending 4417, bank reference HLW-88213, not yet received.</pre></div><div class='card'>
+<h2>Complaints <span class='pill p2'>P2</span></h2>
+<div class='meta'>gconv-0001 · routed by participant_data · agent Priya · state connected</div>
+<div><span class='pill'>complaint</span><span class='pill'>frustrated</span><span class='pill'>legal_mention</span></div>
+<table><tr><td>hl_auth</td><td>verified</td></tr><tr><td>hl_contract</td><td>v1</td></tr><tr><td>hl_conversation_id</td><td>conv-0001</td></tr><tr><td>hl_flags</td><td>complaint,frustrated,legal_mention</td></tr><tr><td>hl_lang</td><td>en</td></tr><tr><td>hl_priority</td><td>P2</td></tr><tr><td>hl_queue</td><td>Complaints</td></tr><tr><td>hl_topic</td><td>close_out_dispute</td></tr></table>
+<pre>[HANDOFF v1] queue=Complaints priority=P2 flags=complaint,frustrated,legal_mention lang=en auth=verified
+SUMMARY: Complaint or regulator/legal mention. Topic: close out dispute. Latest message: &quot;You closed my position at the worst possible price. This is theft. I&#x27;m going to the regulator and my solicitor.&quot;
+CLIENT WANTS: To complain about how this was handled, and a resolution.
+AI ALREADY TOLD THEM: (none)
+DATA PULLED: (none)
+SIGNALS: complaint (&quot;regulator&quot;); frustrated (&quot;worst&quot;); legal_mention (&quot;regulator&quot;)
+CLIENT WAS TOLD: I&#x27;ve noted that you&#x27;re unhappy with how this has been handled, and I&#x27;ve flagged it as a complaint so our team reviews it properly. They&#x27;ll explain the next steps and timescale.
+DO NOT ASK AGAIN: (none)
+SUGGESTED NEXT STEP: Acknowledge the complaint and open the complaint record; do not debate the outcome in chat. (the human decides)
+TRANSCRIPT: assistant://conversations/conv-0001
+RECENT TRANSCRIPT:
+client: You closed my position at the worst possible price. This is theft. I&#x27;m going to the regulator and my solicitor.
+assistant: I&#x27;ve noted that you&#x27;re unhappy with how this has been handled, and I&#x27;ve flagged it as a complaint so our team reviews it properly. They&#x27;ll explain the next steps and timescale.</pre></div><div class='card'>
+<h2>PriorityVulnerable <span class='pill p1'>P1</span></h2>
+<div class='meta'>gconv-0001 · routed by participant_data · agent Sam · state connected</div>
+<div><span class='pill'>possible_vulnerability</span></div>
+<table><tr><td>hl_auth</td><td>verified</td></tr><tr><td>hl_contract</td><td>v1</td></tr><tr><td>hl_conversation_id</td><td>conv-0001</td></tr><tr><td>hl_flags</td><td>possible_vulnerability</td></tr><tr><td>hl_lang</td><td>en</td></tr><tr><td>hl_priority</td><td>P1</td></tr><tr><td>hl_queue</td><td>PriorityVulnerable</td></tr><tr><td>hl_topic</td><td>other</td></tr></table>
+<pre>[HANDOFF v1] queue=PriorityVulnerable priority=P1 flags=possible_vulnerability lang=en auth=verified
+SUMMARY: Possible vulnerability. Topic: other. Latest message: &quot;I&#x27;ve lost nearly everything this month. I can&#x27;t stop trading. I don&#x27;t know what I&#x27;m going to tell my family.&quot;
+CLIENT WANTS: Support from a person.
+AI ALREADY TOLD THEM: (none)
+DATA PULLED: (none)
+SIGNALS: possible_vulnerability (&quot;lost nearly everything&quot;)
+CLIENT WAS TOLD: Thank you for telling me. I&#x27;d like to get you to someone on our team who can talk this through with you now.
+DO NOT ASK AGAIN: (none)
+SUGGESTED NEXT STEP: Follow the vulnerable-client process; offer support options and account controls. (the human decides)
+TRANSCRIPT: assistant://conversations/conv-0001
+RECENT TRANSCRIPT:
+client: I&#x27;ve lost nearly everything this month. I can&#x27;t stop trading. I don&#x27;t know what I&#x27;m going to tell my family.
+assistant: Thank you for telling me. I&#x27;d like to get you to someone on our team who can talk this through with you now.</pre></div><div class='card'>
+<h2>AccountKYC <span class='pill p1'>P1</span></h2>
+<div class='meta'>gconv-0001 · routed by participant_data · agent Wei · state connected</div>
+<div><span class='pill'>account_access</span><span class='pill'>time_critical</span></div>
+<table><tr><td>hl_auth</td><td>verified</td></tr><tr><td>hl_contract</td><td>v1</td></tr><tr><td>hl_conversation_id</td><td>conv-0001</td></tr><tr><td>hl_flags</td><td>account_access,time_critical</td></tr><tr><td>hl_lang</td><td>en</td></tr><tr><td>hl_priority</td><td>P1</td></tr><tr><td>hl_queue</td><td>AccountKYC</td></tr><tr><td>hl_topic</td><td>account_access</td></tr></table>
+<pre>[HANDOFF v1] queue=AccountKYC priority=P1 flags=account_access,time_critical lang=en auth=verified
+SUMMARY: Identity or 2fa reset. Topic: account access. Latest message: &quot;I lost my phone and can&#x27;t get into my authenticator. I have open positions and the market opens in 20 minutes.&quot;
+CLIENT WANTS: To get back into the account.
+AI ALREADY TOLD THEM: (none)
+DATA PULLED: (none)
+SIGNALS: account_access (&quot;lost my phone&quot;); time_critical (&quot;open positions&quot;)
+CLIENT WAS TOLD: A person needs to verify your identity for this, so I&#x27;m passing you to our account team now. Your positions and stops stay in place in the meantime.
+DO NOT ASK AGAIN: (none)
+SUGGESTED NEXT STEP: Verify identity, then reset 2FA; offer phone dealing if positions need action now. (the human decides)
+TRANSCRIPT: assistant://conversations/conv-0001
+RECENT TRANSCRIPT:
+client: I lost my phone and can&#x27;t get into my authenticator. I have open positions and the market opens in 20 minutes.
+assistant: A person needs to verify your identity for this, so I&#x27;m passing you to our account team now. Your positions and stops stay in place in the meantime.</pre></div><div class='card'>
+<h2>Security <span class='pill p1'>P1</span></h2>
+<div class='meta'>gconv-0001 · routed by participant_data · agent waiting · state queued</div>
+<div><span class='pill'>asked_for_human</span><span class='pill'>suspected_unauthorised</span></div>
+<table><tr><td>hl_auth</td><td>verified</td></tr><tr><td>hl_contract</td><td>v1</td></tr><tr><td>hl_conversation_id</td><td>conv-0001</td></tr><tr><td>hl_flags</td><td>asked_for_human,suspected_unauthorised</td></tr><tr><td>hl_lang</td><td>en</td></tr><tr><td>hl_priority</td><td>P1</td></tr><tr><td>hl_queue</td><td>Security</td></tr><tr><td>hl_topic</td><td>unauthorised_activity</td></tr></table>
+<pre>[HANDOFF v1] queue=Security priority=P1 flags=asked_for_human,suspected_unauthorised lang=en auth=verified
+SUMMARY: Suspected unauthorised activity. Topic: unauthorised activity. Latest message: &quot;There&#x27;s a withdrawal request on my account I didn&#x27;t make. I want to speak to a person.&quot;
+CLIENT WANTS: To stop activity they don&#x27;t recognise.
+AI ALREADY TOLD THEM: (none)
+DATA PULLED: (none)
+SIGNALS: asked_for_human (&quot;speak to a person&quot;); suspected_unauthorised (&quot;didn&#x27;t make&quot;)
+CLIENT WAS TOLD: I&#x27;m getting this to our security team now. If you can, change your password in the app straight away.
+DO NOT ASK AGAIN: (none)
+SUGGESTED NEXT STEP: Secure the account first; hold any pending withdrawal; verify identity. (the human decides)
+TRANSCRIPT: assistant://conversations/conv-0001
+RECENT TRANSCRIPT:
+client: There&#x27;s a withdrawal request on my account I didn&#x27;t make. I want to speak to a person.
+assistant: I&#x27;m getting this to our security team now. If you can, change your password in the app straight away.</pre></div></body></html>

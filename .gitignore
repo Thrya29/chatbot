@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.sqlite
+.env
+reports/eval_results_llm.*

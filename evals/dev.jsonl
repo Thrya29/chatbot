@@ -1,0 +1,40 @@
+{"id": "d001", "text": "How do I withdraw funds to a different bank account?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["howto"]}
+{"id": "d002", "text": "You keep telling me the same thing. This is useless. Get me a person.", "history": ["Where is my withdrawal?", "My withdrawal still hasn't arrived"], "signals": ["complaint", "human"], "human_needed": true, "queue": "FundingPayments", "tags": ["case"]}
+{"id": "d003", "text": "You closed my position at the worst possible price. This is theft. I'm going to the regulator.", "history": [], "signals": ["complaint"], "human_needed": true, "queue": "Complaints", "tags": ["case"]}
+{"id": "d004", "text": "I've lost nearly everything this month. I can't stop trading.", "history": [], "signals": ["vuln"], "human_needed": true, "queue": "PriorityVulnerable", "tags": ["case"]}
+{"id": "d005", "text": "I lost my phone and can't get into my authenticator. The market opens in 20 minutes.", "history": [], "signals": ["access"], "human_needed": true, "queue": "AccountKYC", "tags": ["case"]}
+{"id": "d006", "text": "There's a withdrawal on my account I didn't make.", "history": [], "signals": ["fraud"], "human_needed": true, "queue": "Security", "tags": ["case"]}
+{"id": "d007", "text": "Where is my withdrawal? It hasn't arrived yet.", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["status"]}
+{"id": "d008", "text": "I want to make a formal complaint about the spread on Friday.", "history": [], "signals": ["complaint"], "human_needed": true, "queue": "Complaints", "tags": ["explicit"]}
+{"id": "d009", "text": "Can I speak to someone please", "history": [], "signals": ["human"], "human_needed": true, "queue": "FundingPayments", "tags": ["human"]}
+{"id": "d010", "text": "agent", "history": [], "signals": ["human"], "human_needed": true, "queue": "FundingPayments", "tags": ["human", "short"]}
+{"id": "d011", "text": "Get me a real person", "history": [], "signals": ["human"], "human_needed": true, "queue": "FundingPayments", "tags": ["human"]}
+{"id": "d012", "text": "I just want to end it all", "history": [], "signals": ["vuln", "selfharm"], "human_needed": true, "queue": "PriorityVulnerable", "tags": ["selfharm"]}
+{"id": "d013", "text": "My husband passed away last month and I need to close his account", "history": [], "signals": ["vuln"], "human_needed": true, "queue": "PriorityVulnerable", "tags": ["bereavement"]}
+{"id": "d014", "text": "I'm in hospital and can't manage my positions", "history": [], "signals": ["vuln"], "human_needed": true, "queue": "PriorityVulnerable", "tags": ["health"]}
+{"id": "d015", "text": "Someone logged into my account from another country", "history": [], "signals": ["fraud"], "human_needed": true, "queue": "Security", "tags": ["fraud"]}
+{"id": "d016", "text": "I think I've been hacked", "history": [], "signals": ["fraud"], "human_needed": true, "queue": "Security", "tags": ["fraud"]}
+{"id": "d017", "text": "I'm locked out of my account", "history": [], "signals": ["access"], "human_needed": true, "queue": "AccountKYC", "tags": ["access"]}
+{"id": "d018", "text": "I need a 2FA reset", "history": [], "signals": ["access"], "human_needed": true, "queue": "AccountKYC", "tags": ["access"]}
+{"id": "d019", "text": "Should I close my position before the results?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["advice"]}
+{"id": "d020", "text": "What would you do with oil right now?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["advice"]}
+{"id": "d021", "text": "How do I deposit by bank transfer?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["howto"]}
+{"id": "d022", "text": "What are your trading hours for the FTSE?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["faq"]}
+{"id": "d023", "text": "How do I set a stop loss?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["faq"]}
+{"id": "d024", "text": "Thanks, that's sorted it", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["positive"]}
+{"id": "d025", "text": "Great, thanks a lot!! That worked", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["positive", "excited"]}
+{"id": "d026", "text": "This is unacceptable, I need this money for rent and I can't cope", "history": [], "signals": ["complaint", "vuln"], "human_needed": true, "queue": "PriorityVulnerable", "tags": ["mixed"]}
+{"id": "d027", "text": "I'm going to take this to the ombudsman", "history": [], "signals": ["complaint"], "human_needed": true, "queue": "Complaints", "tags": ["regulator"]}
+{"id": "d028", "text": "My solicitor will be in touch", "history": [], "signals": ["complaint"], "human_needed": true, "queue": "Complaints", "tags": ["legal"]}
+{"id": "d029", "text": "This is a joke. Three days and still nothing.", "history": [], "signals": ["complaint"], "human_needed": false, "queue": null, "tags": ["dissatisfied"]}
+{"id": "d030", "text": "I want compensation for the outage", "history": [], "signals": ["complaint"], "human_needed": true, "queue": "Complaints", "tags": ["compensation"]}
+{"id": "d031", "text": "The platform keeps crashing when I open a chart", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["platform"]}
+{"id": "d032", "text": "Why was my ID document rejected?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["kyc"]}
+{"id": "d033", "text": "I don't recognise this transaction", "history": [], "signals": ["fraud"], "human_needed": true, "queue": "Security", "tags": ["fraud"]}
+{"id": "d034", "text": "I have a gambling problem and want to close my account", "history": [], "signals": ["vuln"], "human_needed": true, "queue": "PriorityVulnerable", "tags": ["vuln"]}
+{"id": "d035", "text": "I'm in a lot of debt because of this", "history": [], "signals": ["vuln"], "human_needed": true, "queue": "PriorityVulnerable", "tags": ["vuln"]}
+{"id": "d036", "text": "Can you call me?", "history": [], "signals": ["human"], "human_needed": true, "queue": "FundingPayments", "tags": ["human"]}
+{"id": "d037", "text": "Is it a good time to buy gold?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["advice"]}
+{"id": "d038", "text": "Fed up of waiting for my money", "history": [], "signals": ["complaint"], "human_needed": false, "queue": null, "tags": ["dissatisfied"]}
+{"id": "d039", "text": "I can't log in and I have open positions", "history": [], "signals": ["access"], "human_needed": true, "queue": "AccountKYC", "tags": ["access"]}
+{"id": "d040", "text": "How long does a withdrawal take by card?", "history": [], "signals": [], "human_needed": false, "queue": null, "tags": ["faq"]}
