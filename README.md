@@ -19,7 +19,8 @@ client ─▶ AI assistant ──signed webhook──▶ Bridge ──Open Messa
 
 The assistant platform and the contact centre are **mocks** shaped like Intercom Fin and Genesys Cloud Open
 Messaging. Everything else is real code with tests: the handoff contract, detection, routing, withdrawal-status
-logic, bridge reliability (including a circuit breaker), HTTP service, evaluation harness, simulation and report.
+logic, bridge reliability (including a circuit breaker), wait-range forecasting, HTTP service, evaluation harness,
+simulation and report.
 See [docs/mapping-to-fin-genesys.md](docs/mapping-to-fin-genesys.md) for how each piece maps onto the real products.
 
 > Unofficial and independent. Not affiliated with, or built from inside knowledge of, any company. All clients,
@@ -29,13 +30,15 @@ See [docs/mapping-to-fin-genesys.md](docs/mapping-to-fin-genesys.md) for how eac
 
 | What was measured | Result | Read it as |
 |---|---|---|
-| Unit and integration tests | **67 pass** | contract, detection, routing, bridge, circuit breaker, ACD, HTTP, metrics |
+| Unit and integration tests | **76 pass** | contract, detection, routing, bridge, circuit breaker, wait forecast, ACD, HTTP, metrics |
 | Rules v1, blind held-out: reached a person when one was needed | **37%** (19/51) | the first honest number |
 | Rules v2, dev set (tuned on) | 96% (24/25) | flattering by construction |
 | Rules v2, **new blind held-out**: reached a person when needed | **43%** (15/35, 95% CI 28–59%) | **the honest number** |
 | Rules v2, blind: self-harm messages routed to vulnerable-client team | **1 / 4** | this is why rules alone are not enough |
 | Simulated month: containment vs true resolution (no re-contact) | 38% vs **33%** | containment flatters the AI |
 | Queue abandoners who answered the CSAT survey | **6 of 548** | the worst experiences are invisible to CSAT |
+| Wait message, 9 simulated days: clients who waited >5 min longer than told | single number **25%** → calibrated range **2%** | 46% → 2% when priority reorders the queue |
+| Calibrated range: held / above the top (target 80% / 10%) | **76% / 13%** | close, still slightly overconfident; ranges ~8.5 min wide |
 
 **The main finding is a negative result, reported as one.** Keyword rules that look excellent on the data they
 were tuned on reach a person in fewer than half of unseen cases that need one. Rewriting them by concept barely
@@ -70,7 +73,9 @@ DO NOT ASK AGAIN: amount £2,500; account ending 4417
 SUGGESTED NEXT STEP: Trace the payment with the bank reference; confirm whether to log a complaint. (the human decides)
 ```
 
-The client is told exactly what was passed on, and gets a wait message that is true, including out of hours.
+The client is told exactly what was passed on, and gets a wait message that is true, including out of hours. When the
+queue is busy, that message is a forecast range ("Someone from the team should reply in 6 to 15 minutes") from a Monte
+Carlo simulation of the live queue, recalibrated from every client's actual wait. See section 6 of the report.
 
 ## Quickstart
 
@@ -85,10 +90,11 @@ open reports/index.html
 
 | Command | What it does |
 |---|---|
-| `make test` | 67 tests |
+| `make test` | 76 tests |
 | `make demo` | runs the six case conversations end to end; writes transcripts and the agent view |
 | `make eval` | scores detection + routing on dev and both held-out sets; `--gate` fails CI on safety gates |
 | `make eval-llm` | same, with the model layer (needs `ANTHROPIC_API_KEY`) |
+| `make wait` | backtests the wait-range forecaster over 9 simulated days (~3 min); writes `reports/wait_forecast.md` |
 | `make report` | builds `reports/index.html` |
 | `make serve` | runs the bridge as an HTTP service on :8080 (`/webhooks/assistant`, `/webhooks/genesys`, `/healthz`, `/metrics`) |
 
@@ -105,6 +111,8 @@ handoff_lab/
   assistant.py       one assistant turn: detect → decide → answer from data or hand off with a briefing
   bridge.py          signature check, idempotency, mapping, retry/backoff, dead-letter, honest wait messages
   circuit.py         circuit breaker for Genesys calls (adapted from my ATLAS project)
+  wait_forecast.py   wait-range forecast: Monte Carlo over the live queue + online calibration
+  wait_backtest.py   simulated contact-centre days to test it against (method from my scheduler project)
   store.py           SQLite: conversation mapping, seen events, dead letters
   server.py          the bridge as an HTTP service (stdlib)
   mock_assistant_platform.py, mock_genesys.py   the two external systems, mocked
@@ -122,5 +130,15 @@ docs/                architecture, design decisions, mapping to Fin/Genesys, ass
 - [Mapping to Fin and Genesys Cloud](docs/mapping-to-fin-genesys.md)
 - [Assumptions and limits](docs/assumptions-and-limits.md)
 - [Walkthrough and likely questions](docs/walkthrough.md)
+
+## Related projects
+
+Two of my research projects feed into this one:
+- [ATLAS](https://github.com/Thrya29/ATLAS-Research-System), a tool router for LLM agents. Its per-tool circuit
+  breaker is adapted in `circuit.py`, and its evaluation discipline (registered hypotheses, held-out seeds, reporting
+  what didn't work) is the model for `evals/`.
+- [Adaptive Parallelism and Task Scheduling for LangGraph Agents](https://github.com/Thrya29/Adaptive-Parallelism-and-Task-Scheduling-for-LangGraph-Agents).
+  Its method (predict a latency distribution by Monte Carlo, calibrate online, check coverage) is applied in
+  `wait_forecast.py` to the wait a client is told.
 
 MIT licence.

@@ -48,6 +48,7 @@ Client            Assistant platform        Bridge                      Contact 
 | Contact centre down / 5xx / timeout | Exponential backoff, then dead-letter, and the client is told plainly | `test_genesys_outage_retries_dead_letters_and_tells_the_client` |
 | Outage continues | Circuit breaker opens after 3 consecutive failures: later escalations make **no call and no wait**, are dead-lettered, and the client is told at once. After 30 s one trial call is let through; success closes it | `test_outage_is_detected_once_then_later_clients_are_told_immediately`, `test_recovers_after_cooldown_when_genesys_is_back` |
 | 4xx while the breaker is closed | Does **not** count towards opening it: the service answered, our request was wrong | `test_bad_requests_do_not_open_the_breaker` |
+| Priority reorders the queue, so the contact centre gives no estimate | Bridge reads a queue snapshot and tells the client a forecast range; learns from the actual wait at the agent's first reply | `test_bridge_gives_a_range_when_priority_reorders_the_queue`, `test_bridge_learns_from_the_actual_wait_at_first_agent_reply` |
 | Client at risk during an outage | Failure message still includes the crisis line | `test_client_at_risk_still_gets_crisis_line_during_an_outage` |
 | Agent reply for an unknown conversation | 409 + dead-letter (never dropped silently) | `test_unmapped_reply_is_dead_lettered_not_lost` |
 | Participant data stripped in transit | Architect falls back to the header line of the briefing | `test_free_text_only_platform_still_routes_by_header` |
@@ -67,6 +68,9 @@ Client            Assistant platform        Bridge                      Contact 
 - Secrets from a vault and rotation with two valid secrets during the switch.
 - PII handling: the briefing deliberately carries the last 4 digits of an account only. A redaction pass for card
   numbers and sort codes before anything is logged.
+- Wait forecasting fed by real queue data: queue observation queries for waiting and interacting counts and their
+  durations, analytics for completed handle times, and the workforce-management interval forecast for arrivals. The
+  calibration state would be persisted per queue, not held in memory.
 - Tracing: one correlation id (`hl_conversation_id`) across both systems' logs.
 - The assistant's general answers via retrieval over approved help content. This lab only answers the one how-to
   question it needs and focuses on the handoff.

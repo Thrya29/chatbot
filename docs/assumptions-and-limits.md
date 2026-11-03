@@ -38,6 +38,15 @@ The mocks follow public documentation as I understood it. The real products have
   example, abandoners' true satisfaction of about 2.0) are guesses, and A1 is unobservable by definition.
 - It shows how measurements can mislead. **It is not a forecast** of what this design would achieve.
 
+## Wait-forecast limits
+
+- The backtest world is simulated and loosely calibrated to the data pack: median wait about 8 minutes, a
+  market-open surge, about 14% abandonment. It deliberately differs from the forecaster's assumptions, but it is
+  still my simulation, not real queue data.
+- Clients who abandoned have no observed wait and are excluded from accuracy, which flatters every method.
+- The calibrated range is close to, but not at, its target: it held 76% (target 80%) with 13% above (target 10%).
+- One queue with uniform agents is modelled. Real queues share agents across queues and skills.
+
 ## Known misses that are kept visible
 
 Every miss is listed in `reports/eval_results.md`, including sarcasm ("Cheers for the copy-paste answer again"),

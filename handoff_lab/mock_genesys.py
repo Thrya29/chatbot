@@ -23,6 +23,7 @@ from typing import Callable
 
 from .contract import parse_header
 from .signatures import sign
+from .wait_forecast import QueueSnapshot
 
 INBOUND_PATH = "/api/v2/conversations/messages/{integrationId}/inbound/open/message"
 DEPRECATED_PATH = "/api/v2/conversations/messages/inbound/open"
@@ -55,6 +56,7 @@ class Conversation:
     routed_by: str
     messages: list[tuple[str, str]] = field(default_factory=list)   # (sender, text)
     agent: str | None = None
+    connected_at: datetime | None = None
     state: str = "queued"          # queued | connected | ended
     wrap_up: dict | None = None
 
@@ -143,7 +145,7 @@ class MockGenesys:
             if pool:
                 agent = min(pool, key=lambda a: len(a.active))
                 agent.active.append(conv.id)
-                conv.agent, conv.state = agent.name, "connected"
+                conv.agent, conv.state, conv.connected_at = agent.name, "connected", self.now()
 
     def tick(self) -> None:
         """Re-run the ACD, e.g. after time passes (bullseye widening)."""
@@ -162,6 +164,26 @@ class MockGenesys:
             return None
         members = max(1, sum(a.capacity for a in self.agents if conv.queue in a.queues))
         return int((len(ahead) + 1) / members * 14 * 60)
+
+    def queue_snapshot(self, conv_id: str, window_s: int = 1800) -> QueueSnapshot | None:
+        """What a real deployment reads from queue observation and analytics APIs: slots on the queue,
+        how long each in-progress chat has run, who is ahead, and recent higher-priority arrivals."""
+        conv = self.conversations[conv_id]
+        now = self.now()
+        if conv.state != "queued" or not self.staffed(now):
+            return None
+        members = [a for a in self.agents if conv.queue in a.queues]
+        if not members:
+            return None
+        ages = [(now - self.conversations[c].connected_at).total_seconds()
+                for a in members for c in a.active if self.conversations[c].connected_at]
+        rank = (PRIORITY_RANK[conv.priority], conv.arrived)
+        ahead = sum(1 for c in self.conversations.values() if c.state == "queued" and c.queue == conv.queue
+                    and (PRIORITY_RANK[c.priority], c.arrived) < rank)
+        higher = sum(1 for c in self.conversations.values() if c.queue == conv.queue
+                     and PRIORITY_RANK[c.priority] < PRIORITY_RANK[conv.priority]
+                     and (now - c.arrived).total_seconds() <= window_s)
+        return QueueSnapshot(sum(a.capacity for a in members), ages, ahead, higher / window_s)
 
     # ------------------------------------------------------------- outbound
     def agent_reply(self, conv_id: str, text: str) -> None:

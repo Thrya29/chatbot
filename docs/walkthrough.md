@@ -5,7 +5,7 @@
 1. `make demo`, then open `reports/agent_view.html`. Show conversation 2: queue, priority, flags, the briefing,
    "DO NOT ASK AGAIN". Then open `reports/demo_transcripts.md` and show what the client was told.
 2. Show conversation 6 (Saturday 02:00): Security P1, queued, and the out-of-hours message that doesn't invent a wait.
-3. `make test`: 67 tests. Name three failure tests: duplicate webhook, Genesys outage with the circuit breaker, client
+3. `make test`: 76 tests. Name three failure tests: duplicate webhook, Genesys outage with the circuit breaker, client
    spoofing the header.
 4. Open `reports/index.html`, section 1. Say the honest number first: 43% on blind data, and 1 of 4 self-harm
    messages. Explain what that changed in the design.
@@ -54,6 +54,16 @@ mix-shift decomposition separates the two.
 
 **Why `UNDER_REVIEW` with no reason?** Explaining a compliance review to the client could be tipping off. The
 assistant says it's being reviewed and hands off, flagged `restricted`.
+
+**How do you know your wait message is honest?** I backtested it. Over 9 simulated days, with a single number 25% of
+clients waited more than 5 minutes longer than they were told, and 46% when priority reordered the queue. With the
+calibrated range it was 2%. The range itself is still slightly overconfident: 13% of waits land above it, against a
+10% target. The world is simulated, so the next step is replaying real queue logs. The method (simulate a
+distribution, calibrate online, check coverage) is from my scheduler project.
+
+**Why a range and not "about 8 minutes"?** A single number is a median, so about half of clients wait longer than
+they were told. And priority lets later chats jump ahead, so the number is worst exactly when the queue is busiest.
+A range is honest about that uncertainty.
 
 **What would you do in your first month?** Get 500 real handed-off transcripts and have two people label them for
 the signals, measuring agreement. Run rules and rules + model against that. Agree the contract with the

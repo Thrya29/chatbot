@@ -1,8 +1,8 @@
 PY ?= python3
 
-.PHONY: all test demo eval eval-llm report serve clean
+.PHONY: all test demo eval eval-llm wait report serve clean
 
-all: test demo eval report
+all: test demo eval wait report
 
 test:
 	$(PY) -m pytest -q
@@ -15,6 +15,9 @@ eval:
 
 eval-llm:
 	$(PY) evals/run_evals.py --llm
+
+wait:
+	$(PY) -m handoff_lab.wait_backtest
 
 report:
 	$(PY) -m handoff_lab.report

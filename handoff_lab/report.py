@@ -110,6 +110,26 @@ def mix_example() -> dict:
     return r
 
 
+def chart_wait(w: dict) -> str:
+    segs = [("all", "All who waited"), ("outside_surge", "Outside surge"), ("surge", "Market-open\nsurge"),
+            ("reordered", "Priority\nreordered queue")]
+    fig, ax = plt.subplots(figsize=(7.2, 3.0))
+    width = 0.36
+    for i, (k, _label) in enumerate(segs):
+        for j, (key, color, name) in enumerate((("single_broken", ORANGE, "Single number (\"about X minutes\")"),
+                                                ("calibrated_broken", BLUE, "Calibrated range"))):
+            v = w[k][key]["mean"] * 100
+            x = i + (j - 0.5) * (width + 0.02)
+            ax.bar(x, v, width, color=color, zorder=2, label=name if i == 0 else None)
+            ax.text(x, v + 1.2, f"{v:.0f}%", ha="center", fontsize=9, color=INK)
+    ax.set_xticks(range(len(segs)), [s[1] for s in segs])
+    ax.set_ylabel("Waited >5 min longer than told (%)")
+    ax.set_ylim(0, 55)
+    ax.legend(frameon=False, fontsize=9, loc="upper left")
+    ax.grid(axis="x", visible=False)
+    return _svg(fig)
+
+
 CSS = """
 :root{--bg:#f6f5f1;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--rule:#e2e1dc;--accent:#2a78d6;--warn:#b45309;--chart:#fcfcfb}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121211;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--rule:#33332f;--accent:#3987e5;--warn:#f59e0b;--chart:#fcfcfb}}
@@ -127,6 +147,31 @@ th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertic
 """
 
 
+def wait_section(w: dict | None) -> str:
+    if not w:
+        return "<h2>6. Honest wait times</h2><p>Run <code>make wait</code> to include the wait-forecast backtest.</p>"
+    a, r, s = w["all"], w["reordered"], w["surge"]
+
+    def p(seg, k):
+        return f"{100 * seg[k]['mean']:.0f}%"
+
+    return f"""<h2>6. Honest wait times</h2>
+<p>A single estimated wait breaks when priority lets later chats jump ahead, so Handoff Lab used to say "I can't see the
+current wait". It now forecasts a <b>range</b>: a Monte Carlo simulation of the live queue (handle times, people ahead,
+higher-priority arrivals, abandonment) with an arrival profile learned on previous days, recalibrated online from each
+client's actual wait. The method comes from my Adaptive Parallelism scheduler project: predict a distribution, then
+check whether it held. Backtested over 9 simulated days that deliberately differ from the forecaster's assumptions
+(heavier handle-time tail, an unannounced market-open surge).</p>
+<div class="card"><div class="chart">{chart_wait(w)}</div></div>
+<p>With a single number, <b>{p(a, 'single_broken')}</b> of waiting clients waited more than 5 minutes longer than they were
+told ({p(r, 'single_broken')} when priority had reordered the queue). With the calibrated range it was
+<b>{p(a, 'calibrated_broken')}</b>. The range should hold 80% of the time with 10% above it. It held
+{p(a, 'calibrated_coverage')} with {p(a, 'calibrated_above_p90')} above, so it is still slightly overconfident, most when
+priority reorders the queue ({p(r, 'calibrated_above_p90')} above). The price of honesty is precision: ranges average
+{a['calibrated_width_min']['mean']:.1f} minutes wide, and {s['calibrated_width_min']['mean']:.0f} in the surge. Full tables:
+<a href="wait_forecast.md">wait_forecast.md</a>.</p>"""
+
+
 def build() -> Path:
     ev = json.loads((ROOT / "reports" / "eval_results.json").read_text())
     v1 = json.loads((ROOT / "reports" / "baseline" / "eval_rules_v1.json").read_text())
@@ -135,6 +180,8 @@ def build() -> Path:
     blind = ev["held-out v2 (blind)"]
     g = blind["gates"]
     power = [(d, responses_needed(d, 1.15)) for d in (0.1, 0.2, 0.3)]
+    wpath = ROOT / "reports" / "wait_forecast.json"
+    wait = json.loads(wpath.read_text()) if wpath.exists() else None
     monthly = {"AI-resolved": round(1900 * 0.09), "Handed off": round(3100 * 0.22),
                "One topic's handoffs (Funding)": round(5000 * 0.19 * 0.71 * 0.22)}
 
@@ -202,7 +249,9 @@ simulation), compared with the responses one month produces at today's volumes.<
 about two months. A 0.1-point move takes a quarter across all handoffs and about a year for AI-resolved chats. So the primary success metrics are behavioural: re-ask
 rate, re-contact, abandonment, time to first human reply. CSAT is a guardrail that must not fall.</p>
 
-<h2>6. What the human agent sees</h2>
+{wait_section(wait)}
+
+<h2>7. What the human agent sees</h2>
 <p>The demo runs the six case conversations end to end through the mock assistant platform, the bridge and mock
 Genesys. See <a href="agent_view.html">agent_view.html</a> and <a href="demo_transcripts.md">demo_transcripts.md</a>.</p>
 </main></body></html>"""

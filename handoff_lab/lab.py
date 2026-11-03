@@ -44,7 +44,8 @@ class Lab:
         self.genesys_attempts = 0     # every call the bridge actually makes to Genesys
         self.bridge = Bridge(self.store, self._genesys_post, self.platform, ASSISTANT_SECRET, GENESYS_SECRET,
                              INTEGRATION_ID, is_staffed=lambda: self.genesys.staffed(self.clock[0]),
-                             sleep=lambda s: None, clock=lambda: self.clock[0].timestamp())
+                             sleep=lambda s: None, clock=lambda: self.clock[0].timestamp(),
+                             queue_snapshot=self.genesys.queue_snapshot)
         self.assistant = Assistant(lambda c: DEMO_WITHDRAWALS.get(c, []), lambda c: c in OPEN_POSITIONS, today)
         self.bridge_log: list[tuple[str, int, dict]] = []
         self._ids = itertools.count(1)

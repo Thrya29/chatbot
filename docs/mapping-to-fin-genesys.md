@@ -26,8 +26,10 @@ company's configuration.
 | `channel.from.id` with `idType: Opaque` | Stable external id per client conversation, so follow-up messages join the same conversation |
 | `_architect_inbound_flow` | Inbound message flow: Get Participant Data → decision on `hl_queue` / `hl_priority` → Transfer to ACD with priority; fallback string match on the header line; default queue |
 | ACD in `_acd` / `tick` | Queue routing: priority then time in queue, skills, language skill, bullseye ring widening after a timeout, agent utilisation capacity (3 messages) |
-| `estimated_wait` returns None when priority reorders the queue | Estimated wait is unreliable when priority jumps the queue, so the client is told plainly instead of given a number |
+| `estimated_wait` returns None when priority reorders the queue | A single estimated wait is unreliable when priority jumps the queue, so the bridge forecasts a range from a queue snapshot instead (`wait_forecast.py`) |
 | `wrap_up(..., complaint=None)` blocked when `possible_complaint` | Wrap-up codes plus a required field / script question, so possible complaints get a yes or no from the agent |
+| `queue_snapshot` (slots, in-progress chat ages, people ahead, recent higher-priority arrivals) | Queue observation and conversation analytics queries (waiting / interacting with durations, offered counts by interval), plus completed handle times. Check which metrics and filters the current analytics APIs expose |
+| `ArrivalProfile` (arrivals per 15-minute interval, learned from previous days) | The interval forecast a workforce-management module produces for staffing |
 | `conversation_ended` event | Disconnect event on the outbound webhook, used to close the chat thread |
 
 ## Queues (from the case brief, mapped to names)

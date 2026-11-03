@@ -31,6 +31,7 @@ from .mock_genesys import INBOUND_PATH, BadRequest
 from .router import CRISIS_LINE
 from .signatures import verify
 from .store import Store
+from .wait_forecast import OnlineCalibrator, QueueSnapshot, WaitForecaster, range_message
 
 log = logging.getLogger("handoff_lab.bridge")
 
@@ -60,12 +61,21 @@ class Bridge:
                  assistant_secret: str, genesys_secret: str, integration_id: str,
                  is_staffed: Callable[[], bool] = lambda: True, retries: int = 3,
                  sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic,
-                 breaker: CircuitBreaker | None = None):
+                 breaker: CircuitBreaker | None = None,
+                 queue_snapshot: Callable[[str], QueueSnapshot | None] | None = None,
+                 forecaster: WaitForecaster | None = None, calibrator: OnlineCalibrator | None = None):
         self.store, self.genesys_post, self.assistant = store, genesys_post, assistant_api
         self.assistant_secret, self.genesys_secret = assistant_secret, genesys_secret
         self.path = INBOUND_PATH.format(integrationId=integration_id)
         self.is_staffed, self.retries, self.sleep = is_staffed, retries, sleep
         self.breaker = breaker or CircuitBreaker(clock=clock)
+        self.clock = clock
+        # Wait-range forecasting (wait_forecast.py). Without a queue snapshot source the bridge falls
+        # back to the contact centre's own estimate and the fixed messages.
+        self.queue_snapshot = queue_snapshot
+        self.forecaster = forecaster or WaitForecaster()
+        self.calibrator = calibrator or OnlineCalibrator()
+        self._pending_waits: dict[str, tuple] = {}    # genesys conversation -> (raw forecast, handoff time)
 
     # ------------------------------------------------- assistant -> Genesys
     def on_assistant_webhook(self, body: bytes, headers: dict) -> tuple[int, dict]:
@@ -115,9 +125,18 @@ class Bridge:
             return 502, {"error": "genesys unavailable; dead-lettered", "breaker": self.breaker.state().value}
         self.store.link(conv_id, result["conversationId"], event["client_id"])
         ref = attrs.get("hl_ref", "") if attrs.get("hl_topic") == "withdrawal_not_received" else ""
-        self.assistant.reply_as_admin(conv_id, wait_message(result.get("estimatedWaitSeconds"), self.is_staffed(), ref),
-                                      f"wait-{event['id']}", "system")
+        self.assistant.reply_as_admin(conv_id, self._wait_text(result, ref), f"wait-{event['id']}", "system")
         return 200, {"status": "linked", **result}
+
+    def _wait_text(self, result: dict, ref: str) -> str:
+        est, staffed = result.get("estimatedWaitSeconds"), self.is_staffed()
+        if est != 0 and staffed and self.queue_snapshot:
+            snap = self.queue_snapshot(result["conversationId"])
+            if snap is not None:
+                raw = self.forecaster.forecast(snap)
+                self._pending_waits[result["conversationId"]] = (raw, self.clock())
+                return range_message(self.calibrator.apply(raw))
+        return wait_message(est, staffed, ref)
 
     def _forward_client_message(self, event: dict) -> tuple[int, dict]:
         link = self.store.by_assistant(event["conversation_id"])
@@ -175,5 +194,9 @@ class Bridge:
             self.store.set_status(assistant_id, "closed")
             self.assistant.close_after_human(assistant_id)
             return 200, {"status": "closed"}
+        pending = self._pending_waits.pop(msg["conversationId"], None)
+        if pending:                                   # first agent reply: the real wait is now known
+            raw, t0 = pending
+            self.calibrator.observe(raw, self.clock() - t0)
         self.assistant.reply_as_admin(assistant_id, msg["text"], idempotency_key=msg["id"], author="agent")
         return 200, {"status": "delivered"}

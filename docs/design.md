@@ -65,14 +65,39 @@ after the cooldown decides whether to close it again. A 4xx doesn't count as a f
 wrong, not that the service is down.
 The client always gets a true message about what is happening, including "I couldn't pass this to our team".
 
-## 7. Measure what CSAT can't see
+## 7. Tell the client a range, and check it held
+
+**Decision.** When the client has to wait, the message gives a range ("6 to 15 minutes"), not one number and not
+"I can't see the wait". The range is the P10–P90 of a Monte Carlo simulation of the live queue:
+- residual handle time of each chat in progress, from a log-normal learned online from completed chats;
+- people ahead, each of whom may abandon once;
+- higher-priority chats arriving from an arrival profile per 15-minute interval learned on previous days, so the
+  market-open surge is expected.
+
+An online calibrator then nudges the bounds after every actual wait, so that about 10% of waits fall above the range.
+
+**Why.** A single number is a median by nature, so about half of clients wait longer than they were told. And it
+breaks completely when priority reorders the queue. In the backtest, 25% of clients waited more than 5 minutes longer
+than a single number said (46% when the queue was reordered), against 2% with the calibrated range.
+
+**Trade-offs accepted.** Ranges are wide when the queue is volatile (about 13 minutes in the surge). The calibrated
+range is still slightly overconfident (13% above the top against a 10% target). Clients who abandon have no observed
+wait, so all accuracy numbers exclude them.
+
+**Rejected.** Monte Carlo with a flat recent arrival rate: it lags the surge (31% above the top during it). A fixed
+safety margin: calibration learns the margin from data, and it can shrink it again when the world settles.
+
+The method comes from my Adaptive Parallelism scheduler project, which predicts agent-workflow latency
+distributions by simulation, calibrates online and reports P50/P95 coverage.
+
+## 8. Measure what CSAT can't see
 
 Containment is reported next to true resolution (no re-contact). CSAT is reported with its response rate, and next to
 behavioural metrics (re-ask, re-contact, abandonment, time to first human reply), because abandoners are almost never
 surveyed. Changes to handed-off CSAT are decomposed into mix and performance. And the sample size needed to detect a
 change is computed before claiming one.
 
-## 8. Evaluation discipline
+## 9. Evaluation discipline
 
 Dev set for tuning; held-out set written before running; once a held-out set has been read and used to change the
 rules, it is retired and a new blind set is written. Confidence intervals on every rate; the rule of three when a gate
