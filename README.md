@@ -11,7 +11,7 @@ Handoff Lab builds the whole path end to end and then measures it honestly:
 ```
 client ─▶ AI assistant ──signed webhook──▶ Bridge ──Open Messaging──▶ Contact centre (Architect flow + ACD)
   ▲      (detect → tier →                 (verify, dedupe,             (route by participant data,
-  │       answer from data,                 map, retry,                  priority, skills, language,
+  │       answer from data,                 map, retry, breaker,                  priority, skills, language,
   │       or hand off with                  dead-letter,                 bullseye widening, wrap-up)
   │       a briefing)                       honest wait msg)                       │
   └──────────── same chat thread ◀── REST reply ◀── Bridge ◀──signed webhook── human agent
@@ -19,7 +19,7 @@ client ─▶ AI assistant ──signed webhook──▶ Bridge ──Open Messa
 
 The assistant platform and the contact centre are **mocks** shaped like Intercom Fin and Genesys Cloud Open
 Messaging. Everything else is real code with tests: the handoff contract, detection, routing, withdrawal-status
-logic, bridge reliability, HTTP service, evaluation harness, simulation and report.
+logic, bridge reliability (including a circuit breaker), HTTP service, evaluation harness, simulation and report.
 See [docs/mapping-to-fin-genesys.md](docs/mapping-to-fin-genesys.md) for how each piece maps onto the real products.
 
 > Unofficial and independent. Not affiliated with, or built from inside knowledge of, any company. All clients,
@@ -29,7 +29,7 @@ See [docs/mapping-to-fin-genesys.md](docs/mapping-to-fin-genesys.md) for how eac
 
 | What was measured | Result | Read it as |
 |---|---|---|
-| Unit and integration tests | **60 pass** | contract, detection, routing, bridge, ACD, HTTP, metrics |
+| Unit and integration tests | **67 pass** | contract, detection, routing, bridge, circuit breaker, ACD, HTTP, metrics |
 | Rules v1, blind held-out: reached a person when one was needed | **37%** (19/51) | the first honest number |
 | Rules v2, dev set (tuned on) | 96% (24/25) | flattering by construction |
 | Rules v2, **new blind held-out**: reached a person when needed | **43%** (15/35, 95% CI 28–59%) | **the honest number** |
@@ -85,7 +85,7 @@ open reports/index.html
 
 | Command | What it does |
 |---|---|
-| `make test` | 60 tests |
+| `make test` | 67 tests |
 | `make demo` | runs the six case conversations end to end; writes transcripts and the agent view |
 | `make eval` | scores detection + routing on dev and both held-out sets; `--gate` fails CI on safety gates |
 | `make eval-llm` | same, with the model layer (needs `ANTHROPIC_API_KEY`) |
@@ -104,6 +104,7 @@ handoff_lab/
   withdrawal.py      status-first withdrawal answers (working days, UK bank holidays, no tipping-off)
   assistant.py       one assistant turn: detect → decide → answer from data or hand off with a briefing
   bridge.py          signature check, idempotency, mapping, retry/backoff, dead-letter, honest wait messages
+  circuit.py         circuit breaker for Genesys calls (adapted from my ATLAS project)
   store.py           SQLite: conversation mapping, seen events, dead letters
   server.py          the bridge as an HTTP service (stdlib)
   mock_assistant_platform.py, mock_genesys.py   the two external systems, mocked

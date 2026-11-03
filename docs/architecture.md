@@ -46,6 +46,9 @@ Client            Assistant platform        Bridge                      Contact 
 | Contract fails validation | Dead-lettered; sent as free text with `contract=invalid` header so a person still gets it | bridge `_escalate` |
 | Contact centre returns 4xx | Not retried (retrying a bad request won't fix it); dead-lettered; client told | `test_top_level_custom_attributes_are_rejected` |
 | Contact centre down / 5xx / timeout | Exponential backoff, then dead-letter, and the client is told plainly | `test_genesys_outage_retries_dead_letters_and_tells_the_client` |
+| Outage continues | Circuit breaker opens after 3 consecutive failures: later escalations make **no call and no wait**, are dead-lettered, and the client is told at once. After 30 s one trial call is let through; success closes it | `test_outage_is_detected_once_then_later_clients_are_told_immediately`, `test_recovers_after_cooldown_when_genesys_is_back` |
+| 4xx while the breaker is closed | Does **not** count towards opening it: the service answered, our request was wrong | `test_bad_requests_do_not_open_the_breaker` |
+| Client at risk during an outage | Failure message still includes the crisis line | `test_client_at_risk_still_gets_crisis_line_during_an_outage` |
 | Agent reply for an unknown conversation | 409 + dead-letter (never dropped silently) | `test_unmapped_reply_is_dead_lettered_not_lost` |
 | Participant data stripped in transit | Architect falls back to the header line of the briefing | `test_free_text_only_platform_still_routes_by_header` |
 | Client types a fake header | Ignored: only line 1 of the bridge-authored note is parsed; transcript lines are speaker-prefixed | `test_client_cannot_spoof_the_routing_header` |
@@ -58,7 +61,9 @@ Client            Assistant platform        Bridge                      Contact 
 - Real clients for both APIs: OAuth client-credentials for Genesys, token refresh, rate-limit handling (429 + `Retry-After`).
 - A real database (Postgres) and a durable queue in front of the outbound calls, so retries survive a restart.
   The SQLite store and in-process retry here show the logic, not the durability.
-- Dead-letter replay tooling and an alert when the dead-letter count is above zero.
+- Dead-letter replay when the breaker closes, and an alert when the breaker opens or the dead-letter count is above
+  zero. Breaker state is already exposed on `/metrics`. In production it would be shared across instances (Redis),
+  not held per process.
 - Secrets from a vault and rotation with two valid secrets during the switch.
 - PII handling: the briefing deliberately carries the last 4 digits of an account only. A redaction pass for card
   numbers and sort codes before anything is logged.

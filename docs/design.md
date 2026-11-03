@@ -57,6 +57,12 @@ prompt-injected model can at worst send a client to a person.
 
 HMAC verification with constant-time compare; idempotency on every inbound event id; a mapping table between the
 two systems' conversation ids; no retries on 4xx; backoff then dead-letter on everything else; never a silent drop.
+
+Retry alone is per request, so during an outage every client would wait through the full backoff and every call would
+add load to a failing system. A circuit breaker (adapted from the per-tool breaker in my ATLAS project) detects the
+outage once. After that, escalations fail fast, are dead-lettered and the client is told immediately. One trial call
+after the cooldown decides whether to close it again. A 4xx doesn't count as a failure: it means our request was
+wrong, not that the service is down.
 The client always gets a true message about what is happening, including "I couldn't pass this to our team".
 
 ## 7. Measure what CSAT can't see

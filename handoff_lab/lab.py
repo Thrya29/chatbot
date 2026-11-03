@@ -41,14 +41,16 @@ class Lab:
         self.genesys = MockGenesys(INTEGRATION_ID, GENESYS_SECRET, self._to_bridge_from_genesys,
                                    now=lambda: self.clock[0], free_text_only=free_text_only)
         self.genesys_down = genesys_down
+        self.genesys_attempts = 0     # every call the bridge actually makes to Genesys
         self.bridge = Bridge(self.store, self._genesys_post, self.platform, ASSISTANT_SECRET, GENESYS_SECRET,
                              INTEGRATION_ID, is_staffed=lambda: self.genesys.staffed(self.clock[0]),
-                             sleep=lambda s: None)
+                             sleep=lambda s: None, clock=lambda: self.clock[0].timestamp())
         self.assistant = Assistant(lambda c: DEMO_WITHDRAWALS.get(c, []), lambda c: c in OPEN_POSITIONS, today)
         self.bridge_log: list[tuple[str, int, dict]] = []
         self._ids = itertools.count(1)
 
     def _genesys_post(self, path: str, body: dict) -> dict:
+        self.genesys_attempts += 1
         if self.genesys_down:
             raise ConnectionError("genesys unreachable")
         return self.genesys.post(path, body)

@@ -10,6 +10,9 @@ Reliability rules:
   * every message ID is processed once (at-least-once delivery is assumed)
   * 4xx from Genesys is not retried (the request is wrong); other failures are
     retried with exponential backoff, then dead-lettered and alerted
+  * a circuit breaker stops calling Genesys during an outage: after 3 consecutive
+    failures, escalations are dead-lettered and the client is told immediately, instead of
+    every client waiting through backoff (see circuit.py)
   * the client is always told something true about the wait
 """
 from __future__ import annotations
@@ -22,8 +25,10 @@ from typing import Callable
 
 import jsonschema
 
+from .circuit import CircuitBreaker, State
 from .contract import render_note, validate
 from .mock_genesys import INBOUND_PATH, BadRequest
+from .router import CRISIS_LINE
 from .signatures import verify
 from .store import Store
 
@@ -54,11 +59,13 @@ class Bridge:
     def __init__(self, store: Store, genesys_post: Callable[[str, dict], dict], assistant_api,
                  assistant_secret: str, genesys_secret: str, integration_id: str,
                  is_staffed: Callable[[], bool] = lambda: True, retries: int = 3,
-                 sleep: Callable[[float], None] = time.sleep):
+                 sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic,
+                 breaker: CircuitBreaker | None = None):
         self.store, self.genesys_post, self.assistant = store, genesys_post, assistant_api
         self.assistant_secret, self.genesys_secret = assistant_secret, genesys_secret
         self.path = INBOUND_PATH.format(integrationId=integration_id)
         self.is_staffed, self.retries, self.sleep = is_staffed, retries, sleep
+        self.breaker = breaker or CircuitBreaker(clock=clock)
 
     # ------------------------------------------------- assistant -> Genesys
     def on_assistant_webhook(self, body: bytes, headers: dict) -> tuple[int, dict]:
@@ -100,9 +107,12 @@ class Bridge:
         }
         result = self._post_with_retry(body, "escalation")
         if result is None:
-            self.assistant.reply_as_admin(conv_id, "I'm sorry, I couldn't pass this to our team just now. Please "
-                                          "try again in a moment, or call us.", f"fail-{event['id']}", "system")
-            return 502, {"error": "genesys unavailable; dead-lettered"}
+            msg = ("I'm sorry, I couldn't pass this to our team just now. Your details are saved, so you won't "
+                   "need to repeat them. Please try again in a few minutes, or call us.")
+            if "self_harm_risk" in attrs.get("hl_flags", "").split(","):
+                msg += " " + CRISIS_LINE     # never leave a client at risk with only "try again later"
+            self.assistant.reply_as_admin(conv_id, msg, f"fail-{event['id']}", "system")
+            return 502, {"error": "genesys unavailable; dead-lettered", "breaker": self.breaker.state().value}
         self.store.link(conv_id, result["conversationId"], event["client_id"])
         ref = attrs.get("hl_ref", "") if attrs.get("hl_topic") == "withdrawal_not_received" else ""
         self.assistant.reply_as_admin(conv_id, wait_message(result.get("estimatedWaitSeconds"), self.is_staffed(), ref),
@@ -124,19 +134,28 @@ class Bridge:
     def _post_with_retry(self, body: dict, kind: str) -> dict | None:
         delay = 0.5
         for attempt in range(1, self.retries + 1):
+            if not self.breaker.allow():                # outage already known: fail fast
+                self.store.dead_letter(kind, body, "circuit open: genesys not called")
+                log.warning("genesys circuit open; %s dead-lettered without a call", kind)
+                return None
             try:
-                return self.genesys_post(self.path, body)
-            except BadRequest as e:                     # our request is wrong: don't retry
+                result = self.genesys_post(self.path, body)
+            except BadRequest as e:                     # our request is wrong: don't retry, and the
+                self.breaker.record_success()           # service answered, so it is not an outage
                 self.store.dead_letter(kind, body, str(e))
                 log.error("genesys rejected %s: %s", kind, e)
                 return None
             except Exception as e:                      # transient: back off and retry
+                self.breaker.record_failure()
                 log.warning("genesys %s attempt %d failed: %s", kind, attempt, e)
-                if attempt == self.retries:
+                if attempt == self.retries or self.breaker.state() is State.OPEN:
                     self.store.dead_letter(kind, body, f"{type(e).__name__}: {e}")
                     return None
                 self.sleep(delay)
                 delay *= 2
+                continue
+            self.breaker.record_success()
+            return result
         return None
 
     # ------------------------------------------------- Genesys -> assistant

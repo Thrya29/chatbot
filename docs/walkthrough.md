@@ -5,7 +5,8 @@
 1. `make demo`, then open `reports/agent_view.html`. Show conversation 2: queue, priority, flags, the briefing,
    "DO NOT ASK AGAIN". Then open `reports/demo_transcripts.md` and show what the client was told.
 2. Show conversation 6 (Saturday 02:00): Security P1, queued, and the out-of-hours message that doesn't invent a wait.
-3. `make test`: 60 tests. Name three failure tests: duplicate webhook, Genesys down, client spoofing the header.
+3. `make test`: 67 tests. Name three failure tests: duplicate webhook, Genesys outage with the circuit breaker, client
+   spoofing the header.
 4. Open `reports/index.html`, section 1. Say the honest number first: 43% on blind data, and 1 of 4 self-harm
    messages. Explain what that changed in the design.
 5. Sections 2–5: containment vs true resolution; survey bias; mix shift; months needed to detect a CSAT change.
@@ -25,8 +26,11 @@ a request for a person is honoured on the first ask, and red-tier checks run bef
 The first blind set was retired once I'd used its misses, and its result (37%) is kept in `reports/baseline/`. The
 weakness is that I wrote the cases and the rules, so the next step is real transcripts labelled by two people.
 
-**What happens if Genesys is down?** Backoff and retry, then a dead-letter with the full payload, and the client is
-told plainly that it didn't go through. 4xx responses aren't retried because they won't succeed.
+**What happens if Genesys is down?** The first escalation retries with backoff. After 3 consecutive failures a circuit
+breaker opens. Every escalation after that makes no call and doesn't wait: it is dead-lettered with its full payload and
+the client is told at once, with the crisis line if they're at risk. After 30 seconds one trial call goes through; if it
+succeeds the breaker closes. 4xx responses aren't retried and don't open the breaker, because they mean our request was
+wrong, not that Genesys is down. The breaker is adapted from the one in my ATLAS project.
 
 **What if the same webhook arrives twice?** Every event id is recorded the first time. The second copy returns 200
 "duplicate ignored", so the sender stops retrying and nothing happens twice.

@@ -44,7 +44,8 @@ def make_server(lab: Lab, host: str = "127.0.0.1", port: int = 8080) -> Threadin
                 return self._send(200, {"ok": True})
             if self.path == "/metrics":
                 with lock:
-                    return self._send(200, {**counters, "dead_letters": len(lab.store.dead_letters())})
+                    return self._send(200, {**counters, "dead_letters": len(lab.store.dead_letters()),
+                                            "genesys_breaker": lab.bridge.breaker.snapshot()})
             self._send(404, {"error": "not found"})
 
         def do_POST(self):  # noqa: N802
